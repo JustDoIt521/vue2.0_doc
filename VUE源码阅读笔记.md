@@ -1,23 +1,51 @@
-
-
-#### VUE源码阅读笔记
+VUE源码阅读笔记
 
 ### 1 寻找vue的主入口
 
-首先看 `package.json`找到 `scripts:{build:xxx}`  可以找到编译入口为 `node scripts/build.js`。通过  `build.js`找到 `buildEntry`来自文件 `config.js`。通过 `config.js`可以找到编译不同版本的所有配置。
+首先看 `package.json`   (为了阅读和调试的方便，我们这里使用的是`dev`版本) 。从配置可以看出来 编译入口是 `scripts/config.js`  。
 
-`package.js`的入口为 `module:dist/vue.runtime.esm.js`。那么我们在 `config.js`中找到配置为
-
-```javascript
-web-runtime-esm': {
-    entry: resolve('web/entry-runtime.js'),
-    dest: resolve('dist/vue.runtime.esm.js'),
-    format: 'es',
-    banner
- },
+```json
+"scripts": {
+    "dev": "rollup -w -c scripts/config.js --environment TARGET:web-full-dev",
+  	...
+    "build": "node scripts/build.js",
+    ...
+  },
 ```
 
-`reolve`函数通过 `alias.js`解析得到路径， `alias.js`中配置如下
+`scripts/config.js`    package.json 文件已经给我标明了 来自  `web-full-dev`。 我们看一下 `web-full-dev`的配置
+
+```javascript
+const builds = {
+ ...
+  'web-full-dev': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.js'),
+    sourceMap: true,
+    format: 'umd',
+    env: 'development',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+    ...
+}
+```
+
+这里的 `resolve`定义如下
+
+```javascript
+const aliases = require('./alias')
+const resolve = p => {
+  const base = p.split('/')[0]
+  if (aliases[base]) {
+    return path.resolve(aliases[base], p.slice(base.length + 1))
+  } else {
+    return path.resolve(__dirname, '../', p)
+  }
+}
+```
+
+通过 `alias.js`统一配置并读取
 
 ```javascript
 module.exports = {
@@ -30,27 +58,34 @@ module.exports = {
   server: resolve('src/server'),
   sfc: resolve('src/sfc')
 }
-
 ```
 
-到 `Vue`入口为 `src/platforms/web/entry-runtime-with-compiler`,通过 该文件 找到 `import Vue from './runtime/index'`，
+那么当我们运行 `npm run dev`的时候， 入口真实文件为 `src/platforms/web/entry-runtime-with-compiler.js`。
+
+```javascript
+...
+import Vue from './runtime/index'
+...
+export default Vue
+```
+
+继续寻找 `runtime/index`
 
 ```javascript
 import Vue from 'core/index'
 ...
-// 此处在Vue的 原型上挂载了 $mount方法
-Vue.prototype.$mount = function (
-  el?: string | Element,
-  hydrating?: boolean
-): Component {
-  el = el && inBrowser ? query(el) : undefined
-  return mountComponent(this, el, hydrating)
-}
+export default Vue
 ```
 
- 在该文件中继续寻找`import Vue from 'core/index.js'`，继续在 `core/index.js` 文件中找到 `import Vue from './instance/index'`。
+`core/index`绝对路径为 `src/core/index.js`
 
-至此 寻找到 `Vue`的核心部分 `core/instance/index.js` 内部即为 `Vue`核心源码。
+```javascript
+import Vue from './instance/index'
+...
+export default Vue
+```
+
+继续向下  `src/core/instance/index.js`
 
 ```javascript
 import { initMixin } from './init'    
@@ -78,9 +113,126 @@ renderMixin(Vue)  // 渲染
 export default Vue
 ```
 
+至此 算是找到了 `Vue`  的核心部分。
+
+### 2 Vue 属性及方法的添加
+
+从 `import Vue from vue` 一共经历了以下几个文件。
+
+```javascript
+import Vue from 'vue'
+        ↓
+src/platforms/web/entry-runtime-with-compiler
+        ↓
+src/platforms/web/runtime/index.js
+        ↓
+src/core/index.js
+        ↓
+src/core/instance/index.js
+  
+```
+
+根据js的加载顺序 我们从底部往上挨个捋。
+
+`src/core/instance/index.js` 
+
+```javascript
+...
+function Vue (options) {
+  if (process.env.NODE_ENV !== 'production' &&
+    !(this instanceof Vue)
+  ) {
+    warn('Vue is a constructor and should be called with the `new` keyword')
+  }
+  this._init(options)
+}
+
+initMixin(Vue)
+stateMixin(Vue)
+eventsMixin(Vue)
+lifecycleMixin(Vue)
+renderMixin(Vue)
+...
+```
+
+定义了 构造函数 `Vue`  这里有五个混入函数。 我们先看着五个函数添加的方法
+
+`initMixin`   |  `core/instance/init.js`
+
+```javascript
+export function initMixin (Vue: Class<Component>) {
+
+  Vue.prototype._init = function (options?: Object) {
+    ...
+  }
+}
+```
+
+添加 `_init`方法。该方法也是 `Vue`的执行入口
+
+`stateMixin`  |   `core/instance/state.js `
+
+```javascript
+import {
+  set,
+  del,
+  ...
+} from '../observer/index'
+
+export function stateMixin (Vue: Class<Component>) {
+  const dataDef = {}
+  dataDef.get = function () { return this._data }
+  const propsDef = {}
+  propsDef.get = function () { return this._props }
+  if (process.env.NODE_ENV !== 'production') {
+    dataDef.set = function () {
+      warn(
+        'Avoid replacing instance root $data. ' +
+        'Use nested data properties instead.',
+        this
+      )
+    }
+    propsDef.set = function () {
+      warn(`$props is readonly.`, this)
+    }
+  }
+  Object.defineProperty(Vue.prototype, '$data', dataDef)
+  Object.defineProperty(Vue.prototype, '$props', propsDef)
+
+  Vue.prototype.$set = set
+  Vue.prototype.$delete = del
+
+  Vue.prototype.$watch = function (
+    expOrFn: string | Function,
+    cb: any,
+    options?: Object
+  ): Function {
+    ...
+  }
+}
+```
+
+添加 `$set`、`$del`方法。 这两个方法来自 `core/observer/index.js`。后面再看
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 定义了构造函数 `Vue`并暴露出去。通常项目的入口文件 `app.js`中调用 `new Vue({...})`也是调用了这里的 `Vue`函数
-
-
 
 ```JavaScript
 // initMixin 的作用相当于将_init 函数挂载在了Vue 对象上   _init 也是实例化Vue对象后执行的操作入口
@@ -287,4 +439,10 @@ export function createComponentInstanceForVnode (
   return new vnode.componentOptions.Ctor(options)
 }
 ```
+
+后面再具体分析这块。 先看主流程
+
+
+
+
 
