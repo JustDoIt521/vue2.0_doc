@@ -134,7 +134,9 @@ src/core/instance/index.js
 
 根据js的加载顺序 我们从底部往上挨个捋。
 
-`src/core/instance/index.js` 
+#### Vue
+
+src/core/instance/index.js 
 
 ```javascript
 ...
@@ -157,7 +159,9 @@ renderMixin(Vue)
 
 定义了 构造函数 `Vue`  这里有五个混入函数。 我们先看着五个函数添加的方法
 
-`initMixin`   |  `core/instance/init.js`
+#### initMixin   
+
+  core/instance/init.js
 
 ```javascript
 export function initMixin (Vue: Class<Component>) {
@@ -170,7 +174,9 @@ export function initMixin (Vue: Class<Component>) {
 
 添加 `_init`方法。该方法也是 `Vue`的执行入口
 
-`stateMixin`  |   `core/instance/state.js `
+#### stateMixin  
+
+   core/instance/state.js
 
 ```javascript
 import {
@@ -212,7 +218,57 @@ export function stateMixin (Vue: Class<Component>) {
 }
 ```
 
-添加 `$set`、`$del`方法。 这两个方法来自 `core/observer/index.js`。后面再看
+添加 `$set`、`$del`方法。设置`$data`、 `$props` 。当访问这两个属性的时候返回  `this._data`、 `this._props`。
+
+#### eventsMixin 
+
+core/instance/events.js
+
+```JavaScript
+export function eventsMixin (Vue: Class<Component>) {
+  const hookRE = /^hook:/
+  Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
+    ...
+  }
+
+  Vue.prototype.$once = function (event: string, fn: Function): Component {
+    ...
+  }
+
+  Vue.prototype.$off = function (event?: string | Array<string>, fn?: Function): Component {
+    ...
+  }
+
+  Vue.prototype.$emit = function (event: string): Component {
+   ...
+  }
+}
+
+```
+
+添加 `$on`、`$once` 、`$off` 、 `$emit`方法。
+
+#### lifecycleMixin
+
+core/instance/lifecycle.js
+
+```javascript
+export function lifecycleMixin (Vue: Class<Component>) {
+  Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
+  	...
+  }
+
+  Vue.prototype.$forceUpdate = function () {
+  	...
+  }
+
+  Vue.prototype.$destroy = function () {
+    ...
+  }
+}
+```
+
+
 
 
 
