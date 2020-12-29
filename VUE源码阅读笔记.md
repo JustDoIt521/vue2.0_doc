@@ -597,9 +597,9 @@ export default Vue
 
 ## mergeOptions
 
-功能： 合并操作对象    用于实例化和继承的核心程序
-
 位置： core/util/options.js
+
+功能： 合并操作对象    用于实例化和继承的核心程序
 
 ```javascript
 /**
@@ -660,9 +660,9 @@ export function mergeOptions (
 
 ## normalizeProps
 
-功能： 将子组件需要依赖于父组件的属性 添加到父组件的options上
-
 位置：core/util/options.js
+
+功能：将子组件需要依赖于父组件的属性 添加到父组件的options上。并将props语法转化为对象格式。 我们一般使用props的时候也有两种方式 `props: [....]` 或 `props： {...}`。 这里也是根据两种不同类型做了处理。 只是结果是一致的都，都是将 props属性添加到父组件的 options上。
 
 ```javascript
 /**
@@ -706,15 +706,89 @@ function normalizeProps (options: Object, vm: ?Component) {
 
 
 
+## normalizeInject
+
+位置：core/util/options.js
+
+功能：将 inject转换为如下的基本格式。
+
+```javascript
+
+{
+	key1: {
+		from: xxx,
+          //  如果inject[key1]为对象 则扩展对象内字段 如
+         defalut: xxxx
+         // 如果 inject[key1]为对象 且重新指定了from   则from字段被重新赋值为 指定的 key
+	}
+}
+```
+
+
+
+```javascript
+/**
+ * Normalize all injections into Object-based format
+ */
+function normalizeInject (options: Object, vm: ?Component) {
+  const inject = options.inject
+  if (!inject) return
+  const normalized = options.inject = {}
+  if (Array.isArray(inject)) {
+    for (let i = 0; i < inject.length; i++) {
+      normalized[inject[i]] = { from: inject[i] }
+    }
+  } else if (isPlainObject(inject)) {
+    for (const key in inject) {
+      const val = inject[key]
+      normalized[key] = isPlainObject(val)
+        ? extend({ from: key }, val)
+        : { from: val }
+    }
+  } else if (process.env.NODE_ENV !== 'production') {
+    warn(
+      `Invalid value for option "inject": expected an Array or an Object, ` +
+      `but got ${toRawType(inject)}.`,
+      vm
+    )
+  }
+}
+```
+
+
+
+## normalizeDirectives
+
+位置：core/util/options.js
+
+功能：如果某个自定义指令是函数类型， 则将其转换为对象形式，并指定为 `bind`和 `update`时触发的函数。
+
+```javascript
+/**
+ * Normalize raw function directives into object format.
+ */
+function normalizeDirectives (options: Object) {
+  const dirs = options.directives
+  if (dirs) {
+    for (const key in dirs) {
+      const def = dirs[key]
+      if (typeof def === 'function') {
+        dirs[key] = { bind: def, update: def }
+      }
+    }
+  }
+
+```
+
 
 
 # 工具函数
 
 ## *cached
 
-功能： 暂未发现用途。 （根据官方注释 是创造了一个纯函数的缓存版本？？）
-
 位置：core/shared/util.js
+
+功能： 暂未发现用途。 （根据官方注释 是创造了一个纯函数的缓存版本？？）
 
 ```javascript
 /**
@@ -733,9 +807,9 @@ export function cached<F: Function> (fn: F): F {
 
 ## cnamelize
 
-功能： 将以 `-`连接的属性名替换为驼峰命名。
-
 位置：core/shared/util.js
+
+功能： 将以 `-`连接的属性名替换为驼峰命名。
 
 ```javascript
 /**
@@ -751,9 +825,9 @@ export const camelize = cached((str: string): string => {
 
 ## isPlainObject
 
-功能：确保是纯对象。
-
 位置： core/shared/util.js
+
+功能：确保是纯对象。
 
 ```javascript
 /**
@@ -767,7 +841,23 @@ export function isPlainObject (obj: any): boolean {
 
 
 
+## extend
 
+位置： core/shared/util.js
+
+功能：将源函数的属性添加到目标函数上
+
+```javascript
+/**
+ * Mix properties into target object.
+ */
+export function extend (to: Object, _from: ?Object): Object {
+  for (const key in _from) {
+    to[key] = _from[key]
+  }
+  return to
+}
+```
 
 
 
