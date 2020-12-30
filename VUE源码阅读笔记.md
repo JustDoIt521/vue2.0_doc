@@ -599,7 +599,7 @@ export default Vue
 
 位置： core/util/options.js
 
-功能： 合并操作对象    用于实例化和继承的核心程序
+功能： 合并操作对象    用于实例化和继承的核心程序。 对于chilid来说， 如果child是由
 
 ```javascript
 /**
@@ -662,7 +662,7 @@ export function mergeOptions (
 
 位置：core/util/options.js
 
-功能：将子组件需要依赖于父组件的属性 添加到父组件的options上。并将props语法转化为对象格式。 我们一般使用props的时候也有两种方式 `props: [....]` 或 `props： {...}`。 这里也是根据两种不同类型做了处理。 只是结果是一致的都，都是将 props属性添加到父组件的 options上。
+功能：将子组件的props语法转化为对象格式。 我们一般使用props的时候也有两种方式 `props: [....]` 或 `props： {...}`。 这里也是根据两种不同类型做了处理。 
 
 ```javascript
 /**
@@ -859,9 +859,22 @@ export function extend (to: Object, _from: ?Object): Object {
 }
 ```
 
+## hasOwn
 
+位置： core/shared/util.js
 
+功能： 判断对象自身是否包含某个属性
 
+```javascript
+/**
+ * Check whether an object has the property.
+ */
+const hasOwnProperty = Object.prototype.hasOwnProperty
+export function hasOwn (obj: Object | Array<*>, key: string): boolean {
+  return hasOwnProperty.call(obj, key)
+}
+
+```
 
 
 
