@@ -553,7 +553,7 @@ Vue.prototype.$mount = function (
 export default Vue
 ```
 
-在vue的原型上添加 `$mount`方法。 并对 Vue 的 config  和 options 属性进行扩展
+在vue的原型上添加 `$mount`方法。 并对 Vue 的 `config`  和 `options` 属性进行扩展
 
 ## 4层
 
@@ -589,23 +589,56 @@ export default Vue
 
 从上一章可以知道， 当我们执行 `new Vue`的时候，其实是调用了 `this._init`方法。我们接下来就分析一下 在 `new`的过程中 发生了啥。
 
+首先调用 `this._init`。 我们传进去的
+
+
+
 
 
 
 
 # 功能函数
 
-## mergeOptions
+## *resolveConstructorOptions
+
+位置： core/instance/init.js
+
+```javascript
+export function resolveConstructorOptions (Ctor: Class<Component>) {
+  let options = Ctor.options
+  if (Ctor.super) {
+    const superOptions = resolveConstructorOptions(Ctor.super)
+    const cachedSuperOptions = Ctor.superOptions
+    if (superOptions !== cachedSuperOptions) {
+      // super option changed,
+      // need to resolve new options.
+      Ctor.superOptions = superOptions
+      // check if there are any late-modified/attached options (#4976)
+      const modifiedOptions = resolveModifiedOptions(Ctor)
+      // update base extend options
+      if (modifiedOptions) {
+        extend(Ctor.extendOptions, modifiedOptions)
+      }
+      options = Ctor.options = mergeOptions(superOptions, Ctor.extendOptions)
+      if (options.name) {
+        options.components[options.name] = Ctor
+      }
+    }
+  }
+  return options
+}
+```
+
+
+
+## *mergeOptions
 
 位置： core/util/options.js
 
-功能： 合并操作对象    用于实例化和继承的核心程序。 对于chilid来说， 如果child是由
+
 
 ```javascript
-/**
- * Merge two option objects into a new one.
- * Core utility used in both instantiation and inheritance.
- */
+// 合并操作对象    用于实例化和继承的核心程序。
 export function mergeOptions (
   parent: Object,
   child: Object,
@@ -627,6 +660,8 @@ export function mergeOptions (
   // but only if it is a raw options object that isn't
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
+    
+/*****************    疑问部分， 猜测为 调用 extends 或则 mixins会添加 extends| mixins
   if (!child._base) {
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
@@ -637,6 +672,7 @@ export function mergeOptions (
       }
     }
   }
+  ****************/
 
   const options = {}
   let key
@@ -653,6 +689,249 @@ export function mergeOptions (
     options[key] = strat(parent[key], child[key], vm, key)
   }
   return options
+}
+```
+
+## defaultStrat
+
+位置：core/util/options
+
+功能： 默认返回子元素的方法， 如果子元素该方法不存在  则返回父元素该方法
+
+```javascript
+const defaultStrat = function (parentVal: any, childVal: any): any {
+  return childVal === undefined
+    ? parentVal
+    : childVal
+}
+```
+
+
+
+## strats
+
+位置： core/util/options
+
+功能：提供属性方法集合 帮助合并 parent option 和 child option。 
+
+```javascript
+/**
+ * Option overwriting strategies are functions that handle
+ * how to merge a parent option value and a child option
+ * value into the final value.
+ */
+
+// ls注： config.optionMegeStrategies = Object.create(null) 
+const strats = config.optionMergeStrategies  // 创建空对象
+
+
+/**
+ * Options with restrictions
+ */
+if (process.env.NODE_ENV !== 'production') {
+  strats.el = strats.propsData = function (parent, child, vm, key) {
+    if (!vm) {
+      warn(
+        `option "${key}" can only be used during instance ` +
+        'creation with the `new` keyword.'
+      )
+    }
+    return defaultStrat(parent, child)
+  }
+}
+
+// 关于parent、child  data的处理
+strats.data = function (
+  parentVal: any,
+  childVal: any,
+  vm?: Component
+): ?Function {
+  if (!vm) {
+    if (childVal && typeof childVal !== 'function') {
+      process.env.NODE_ENV !== 'production' && warn(
+        'The "data" option should be a function ' +
+        'that returns a per-instance value in component ' +
+        'definitions.',
+        vm
+      )
+
+      return parentVal
+    }
+    return mergeDataOrFn(parentVal, childVal)
+  }
+
+  return mergeDataOrFn(parentVal, childVal, vm)
+}
+
+/**
+LIFECYCLE_HOOKS:
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestroy',
+  'destroyed',
+  'activated',
+  'deactivated',
+  'errorCaptured',
+  'serverPrefetch'
+**/
+LIFECYCLE_HOOKS.forEach(hook => {
+  strats[hook] = mergeHook
+})
+
+/**
+ASSET_TYPES：
+  'component',
+  'directive',
+  'filter'
+**/
+
+ASSET_TYPES.forEach(function (type) {
+  strats[type + 's'] = mergeAssets
+})
+
+/**
+ * Watchers.
+ *
+ * Watchers hashes should not overwrite one
+ * another, so we merge them as arrays.
+ */
+strats.watch = function (
+  parentVal: ?Object,
+  childVal: ?Object,
+  vm?: Component,
+  key: string
+): ?Object {
+  // work around Firefox's Object.prototype.watch...
+  if (parentVal === nativeWatch) parentVal = undefined
+  if (childVal === nativeWatch) childVal = undefined
+  /* istanbul ignore if */
+  if (!childVal) return Object.create(parentVal || null)
+  if (process.env.NODE_ENV !== 'production') {
+    assertObjectType(key, childVal, vm)
+  }
+  if (!parentVal) return childVal
+  const ret = {}
+  extend(ret, parentVal)
+  for (const key in childVal) {
+    let parent = ret[key]
+    const child = childVal[key]
+    if (parent && !Array.isArray(parent)) {
+      parent = [parent]
+    }
+    ret[key] = parent
+      ? parent.concat(child)
+      : Array.isArray(child) ? child : [child]
+  }
+  return ret
+}
+
+/**
+ * Other object hashes.
+ */
+strats.props =
+strats.methods =
+strats.inject =
+strats.computed = function (
+  parentVal: ?Object,
+  childVal: ?Object,
+  vm?: Component,
+  key: string
+): ?Object {
+  if (childVal && process.env.NODE_ENV !== 'production') {
+    assertObjectType(key, childVal, vm)
+  }
+  if (!parentVal) return childVal
+  const ret = Object.create(null)
+  extend(ret, parentVal)
+  if (childVal) extend(ret, childVal)
+  return ret
+}
+strats.provide = mergeDataOrFn
+```
+
+## mergeDataOrFn
+
+位置： core/util/options
+
+功能：
+
+```javascript
+export function mergeDataOrFn (
+  parentVal: any,
+  childVal: any,
+  vm?: Component
+): ?Function {
+  if (!vm) {
+    // in a Vue.extend merge, both should be functions
+    if (!childVal) {
+      return parentVal
+    }
+    if (!parentVal) {
+      return childVal
+    }
+    // when parentVal & childVal are both present,
+    // we need to return a function that returns the
+    // merged result of both functions... no need to
+    // check if parentVal is a function here because
+    // it has to be a function to pass previous merges.
+    return function mergedDataFn () {
+      return mergeData(
+        typeof childVal === 'function' ? childVal.call(this, this) : childVal,
+        typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal
+      )
+    }
+  } else {
+    return function mergedInstanceDataFn () {
+      // instance merge
+      const instanceData = typeof childVal === 'function'
+        ? childVal.call(vm, vm)
+        : childVal
+      const defaultData = typeof parentVal === 'function'
+        ? parentVal.call(vm, vm)
+        : parentVal
+      if (instanceData) {
+        return mergeData(instanceData, defaultData)
+      } else {
+        return defaultData
+      }
+    }
+  }
+}
+```
+
+
+
+## mergeAssets
+
+位置： core/util/options
+
+功能：
+
+```java
+/**
+ * Assets
+ *
+ * When a vm is present (instance creation), we need to do
+ * a three-way merge between constructor options, instance
+ * options and parent options.
+ */
+function mergeAssets (
+  parentVal: ?Object,
+  childVal: ?Object,
+  vm?: Component,
+  key: string
+): Object {
+  const res = Object.create(parentVal || null)
+  if (childVal) {
+    process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm)
+    return extend(res, childVal)
+  } else {
+    return res
+  }
 }
 ```
 
