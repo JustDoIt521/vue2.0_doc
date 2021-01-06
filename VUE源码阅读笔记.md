@@ -905,11 +905,11 @@ export function mergeDataOrFn (
 
 
 
-## mergeAssets
+## **mergeAssets
 
 位置： core/util/options
 
-功能：
+功能： 如果child和parent存在相同属性 则以child覆盖parent？
 
 ```java
 /**
