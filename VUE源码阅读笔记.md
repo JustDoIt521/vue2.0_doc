@@ -913,16 +913,18 @@ export function mergeDataOrFn (
 
 ```java
 /**
- * Assets
  *
  * When a vm is present (instance creation), we need to do
  * a three-way merge between constructor options, instance
  * options and parent options.
+    当vm存在的时候  我们要在 构造函数选项、实例选项、父选项之间进行合并
  */
+
+//  我们可以理解为 将childVal的属性 添加到 parentVal上 所谓的合并 是不是就是  把子元素属性合并到父元素
 function mergeAssets (
-  parentVal: ?Object,
-  childVal: ?Object,
-  vm?: Component,
+  parentVal: ?Object, // 父选项 | 构造函数选项
+  childVal: ?Object, //  
+  vm?: Component,   // 实例
   key: string
 ): Object {
   const res = Object.create(parentVal || null)
