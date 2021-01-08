@@ -224,7 +224,7 @@ export function stateMixin (Vue: Class<Component>) {
 
 ### eventsMixin 
 
-core/instance/events.js
+位置：tance/events.js
 
 ```JavaScript
 export function eventsMixin (Vue: Class<Component>) {
@@ -631,11 +631,11 @@ export function resolveConstructorOptions (Ctor: Class<Component>) {
 
 
 
-## *mergeOptions
+## mergeOptions
 
 位置： core/util/options.js
 
-
+功能： parent代表默认的操作， child是开发者自定义的操作， 比如 钩子函数等触发的时候 执行哪些动作。  这里其实是用自定义操作替换默认操作
 
 ```javascript
 // 合并操作对象    用于实例化和继承的核心程序。
@@ -692,23 +692,9 @@ export function mergeOptions (
 }
 ```
 
-## defaultStrat
-
-位置：core/util/options
-
-功能： 默认返回子元素的方法， 如果子元素该方法不存在  则返回父元素该方法
-
-```javascript
-const defaultStrat = function (parentVal: any, childVal: any): any {
-  return childVal === undefined
-    ? parentVal
-    : childVal
-}
-```
 
 
-
-## strats
+### strats
 
 位置： core/util/options
 
@@ -853,11 +839,29 @@ strats.computed = function (
 strats.provide = mergeDataOrFn
 ```
 
-## mergeDataOrFn
+
+
+#### defaultStrat
+
+位置：core/util/options
+
+功能： 子元素的属性方法存在 则以子元素属性方法覆盖， 如果子元素该方法不存在  则返回父元素该方法
+
+```javascript
+const defaultStrat = function (parentVal: any, childVal: any): any {
+  return childVal === undefined
+    ? parentVal
+    : childVal
+}
+```
+
+
+
+#### mergeDataOrFn
 
 位置： core/util/options
 
-功能：
+功能：合并data属性
 
 ```javascript
 export function mergeDataOrFn (
@@ -905,7 +909,7 @@ export function mergeDataOrFn (
 
 
 
-## **mergeAssets
+#### **mergeAssets
 
 位置： core/util/options
 
@@ -939,7 +943,7 @@ function mergeAssets (
 
 
 
-## normalizeProps
+### normalizeProps
 
 位置：core/util/options.js
 
@@ -987,7 +991,7 @@ function normalizeProps (options: Object, vm: ?Component) {
 
 
 
-## normalizeInject
+### normalizeInject
 
 位置：core/util/options.js
 
@@ -1038,7 +1042,7 @@ function normalizeInject (options: Object, vm: ?Component) {
 
 
 
-## normalizeDirectives
+### normalizeDirectives
 
 位置：core/util/options.js
 
@@ -1059,6 +1063,82 @@ function normalizeDirectives (options: Object) {
     }
   }
 
+```
+
+
+
+## initLifecycyle
+
+位置：core/instance/lifecycle.js
+
+功能：定义 `$parent` （父级对象） `$root` （根对象）    初始化  `$children`  `$ref`  `_watcher`  `inactive`   `directInactive`  `_isMounted`   `_isDestroyed`  `isBeingDestroyed` 等属性和对象
+
+```javascript
+export function initLifecycle (vm: Component) {
+  const options = vm.$options
+
+  // locate first non-abstract parent
+  let parent = options.parent
+  if (parent && !options.abstract) {
+    while (parent.$options.abstract && parent.$parent) {
+      parent = parent.$parent
+    }
+    parent.$children.push(vm)
+  }
+
+  vm.$parent = parent
+  vm.$root = parent ? parent.$root : vm
+
+  vm.$children = []
+  vm.$refs = {}
+
+  vm._watcher = null
+  vm._inactive = null
+  vm._directInactive = false
+  vm._isMounted = false
+  vm._isDestroyed = false
+  vm._isBeingDestroyed = false
+}
+```
+
+
+
+## initEvents
+
+位置：core/instance/events.js
+
+功能：
+
+```javascript
+export function initEvents (vm: Component) {
+  vm._events = Object.create(null)
+  vm._hasHookEvent = false
+  // init parent attached events
+  const listeners = vm.$options._parentListeners
+  if (listeners) {
+    updateComponentListeners(vm, listeners)
+  }
+}
+
+let target: any
+
+function add (event, fn) {
+  target.$on(event, fn)
+}
+
+function remove (event, fn) {
+  target.$off(event, fn)
+}
+
+function createOnceHandler (event, fn) {
+  const _target = target
+  return function onceHandler () {
+    const res = fn.apply(null, arguments)
+    if (res !== null) {
+      _target.$off(event, onceHandler)
+    }
+  }
+}
 ```
 
 
