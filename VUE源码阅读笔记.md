@@ -1119,23 +1119,73 @@ export function initEvents (vm: Component) {
     updateComponentListeners(vm, listeners)
   }
 }
+```
 
-let target: any
+### updateComponentListeners
 
-function add (event, fn) {
-  target.$on(event, fn)
+位置：core/instance/events.js
+
+功能：
+
+```javascript
+export function updateComponentListeners (
+  vm: Component,
+  listeners: Object,
+  oldListeners: ?Object
+) {
+  target = vm
+  updateListeners(listeners, oldListeners || {}, add, remove, createOnceHandler, vm)
+  target = undefined
 }
+```
 
-function remove (event, fn) {
-  target.$off(event, fn)
-}
+#### updateListeners
 
-function createOnceHandler (event, fn) {
-  const _target = target
-  return function onceHandler () {
-    const res = fn.apply(null, arguments)
-    if (res !== null) {
-      _target.$off(event, onceHandler)
+位置： core/vdeom/helpers/update-lsteners.js
+
+功能：
+
+```javascript
+export function updateListeners (
+  on: Object,
+  oldOn: Object,
+  add: Function,
+  remove: Function,
+  createOnceHandler: Function,
+  vm: Component
+) {
+  let name, def, cur, old, event
+  for (name in on) {
+    def = cur = on[name]
+    old = oldOn[name]
+    event = normalizeEvent(name)
+    /* istanbul ignore if */
+    if (__WEEX__ && isPlainObject(def)) {
+      cur = def.handler
+      event.params = def.params
+    }
+    if (isUndef(cur)) {
+      process.env.NODE_ENV !== 'production' && warn(
+        `Invalid handler for event "${event.name}": got ` + String(cur),
+        vm
+      )
+    } else if (isUndef(old)) {
+      if (isUndef(cur.fns)) {
+        cur = on[name] = createFnInvoker(cur, vm)
+      }
+      if (isTrue(event.once)) {
+        cur = on[name] = createOnceHandler(event.name, cur, event.capture)
+      }
+      add(event.name, cur, event.capture, event.passive, event.params)
+    } else if (cur !== old) {
+      old.fns = cur
+      on[name] = old
+    }
+  }
+  for (name in oldOn) {
+    if (isUndef(on[name])) {
+      event = normalizeEvent(name)
+      remove(event.name, oldOn[name], event.capture)
     }
   }
 }
@@ -1144,6 +1194,20 @@ function createOnceHandler (event, fn) {
 
 
 # 工具函数
+
+## isUndef
+
+位置：core/shared/util.js
+
+功能：参数v是否为 undefined或者null
+
+```javascript
+export function isUndef (v: any): boolean %checks {
+  return v === undefined || v === null
+}
+```
+
+
 
 ## *cached
 
