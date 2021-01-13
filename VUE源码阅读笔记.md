@@ -1103,11 +1103,11 @@ export function initLifecycle (vm: Component) {
 
 
 
-## initEvents
+## *initEvents
 
 位置：core/instance/events.js
 
-功能：
+功能：  父级附加事件？ v-bind v-on? 待定
 
 ```javascript
 export function initEvents (vm: Component) {
@@ -1191,7 +1191,49 @@ export function updateListeners (
 }
 ```
 
+## initRender
 
+位置： core/instance/render
+
+功能：
+
+```javascript
+export function initRender (vm: Component) {
+  vm._vnode = null // the root of the child tree
+  vm._staticTrees = null // v-once cached trees
+  const options = vm.$options
+  const parentVnode = vm.$vnode = options._parentVnode // the placeholder node in parent tree
+  const renderContext = parentVnode && parentVnode.context
+  vm.$slots = resolveSlots(options._renderChildren, renderContext)
+  vm.$scopedSlots = emptyObject
+  // bind the createElement fn to this instance
+  // so that we get proper render context inside it.
+  // args order: tag, data, children, normalizationType, alwaysNormalize
+  // internal version is used by render functions compiled from templates
+  vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
+  // normalization is always applied for the public version, used in
+  // user-written render functions.
+  vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
+
+  // $attrs & $listeners are exposed for easier HOC creation.
+  // they need to be reactive so that HOCs using them are always updated
+  const parentData = parentVnode && parentVnode.data
+
+  /* istanbul ignore else */
+  if (process.env.NODE_ENV !== 'production') {
+    defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, () => {
+      !isUpdatingChildComponent && warn(`$attrs is readonly.`, vm)
+    }, true)
+    defineReactive(vm, '$listeners', options._parentListeners || emptyObject, () => {
+      !isUpdatingChildComponent && warn(`$listeners is readonly.`, vm)
+    }, true)
+  } else {
+    defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true)
+    defineReactive(vm, '$listeners', options._parentListeners || emptyObject, null, true)
+  }
+}
+
+```
 
 
 
@@ -1227,6 +1269,18 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 
 
 # 工具函数
+
+## emptyObject
+
+位置：core/shared/util.js
+
+功能： 冻结对象。 不能修改，添加，删除属性，原型也不可修改
+
+```javascript
+export const emptyObject = Object.freeze({})
+```
+
+
 
 ## isUndef
 
@@ -1336,13 +1390,55 @@ export function hasOwn (obj: Object | Array<*>, key: string): boolean {
 
 
 
+## isTrue
+
+位置：core/shared/util.js
+
+功能：判断是否为Boolean对象 且为true
+
+```javascript
+export function isTrue (v: any): boolean %checks {
+  return v === true
+}
+
+```
 
 
 
+## isFalse
+
+位置： core/shared/util.js
+
+功能：判断是否为Boolean对象 且为false
+
+```javascript
+export function isFalse (v: any): boolean %checks {
+  return v === false
+}
+```
 
 
 
+## isPrimitive
 
+位置：core/shared/util.js
+
+功能：判断是否为以下四种原始数据类型  `string` `number` `symbol` `boolean`
+
+```javascript
+/**
+ * Check if value is primitive.
+ */
+export function isPrimitive (value: any): boolean %checks {
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    // $flow-disable-line
+    typeof value === 'symbol' ||
+    typeof value === 'boolean'
+  )
+}
+```
 
 
 
