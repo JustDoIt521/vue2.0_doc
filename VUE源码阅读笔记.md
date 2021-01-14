@@ -1294,6 +1294,155 @@ export function isUndef (v: any): boolean %checks {
 }
 ```
 
+## isDef
+
+位置： 同上
+
+功能： 判断参数 不为  `undefined`  `null`
+
+```javascript
+export function isDef (v: any): boolean %checks {
+  return v !== undefined && v !== null
+}
+```
+
+## isTrue
+
+位置：core/shared/util.js
+
+功能：判断是否为Boolean对象 且为true
+
+```javascript
+export function isTrue (v: any): boolean %checks {
+  return v === true
+}
+
+```
+
+## isFalse
+
+位置： core/shared/util.js
+
+功能：判断是否为Boolean对象 且为false
+
+```javascript
+export function isFalse (v: any): boolean %checks {
+  return v === false
+}
+```
+
+## isPrimitive
+
+位置：core/shared/util.js
+
+功能：判断是否为以下四种原始数据类型  `string` `number` `symbol` `boolean`
+
+```javascript
+/**
+ * Check if value is primitive.
+ */
+export function isPrimitive (value: any): boolean %checks {
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    // $flow-disable-line
+    typeof value === 'symbol' ||
+    typeof value === 'boolean'
+  )
+}
+```
+
+## isObject
+
+位置： 同上
+
+功能： 快速检测非空对象
+
+```javascript
+/**
+ * Quick object check - this is primarily used to tell
+ * Objects from primitive values when we know the value
+ * is a JSON-compliant type.
+ */
+export function isObject (obj: mixed): boolean %checks {
+  return obj !== null && typeof obj === 'object'
+}
+```
+
+## toRawType
+
+位置： 同上
+
+功能： 返回对象的基本数据类型
+
+```javascript
+/**
+ * Get the raw type string of a value, e.g., [object Object].
+ */
+const _toString = Object.prototype.toString
+
+export function toRawType (value: any): string {
+  return _toString.call(value).slice(8, -1)
+}
+```
+
+## isPlainObject
+
+位置： core/shared/util.js
+
+功能：确保是纯对象。
+
+```javascript
+/**
+ * Strict object type check. Only returns true
+ * for plain JavaScript objects.
+ */
+export function isPlainObject (obj: any): boolean {
+  return _toString.call(obj) === '[object Object]'
+}
+```
+
+## isRegExp
+
+位置： 同上
+
+功能： 判断是否是 正则表达式
+
+```javascript
+export function isRegExp (v: any): boolean {
+  return _toString.call(v) === '[object RegExp]'
+}
+```
+
+## *isValidArray
+
+位置：同上
+
+功能：
+
+```javascript
+export function isValidArrayIndex (val: any): boolean {
+  const n = parseFloat(String(val))
+  return n >= 0 && Math.floor(n) === n && isFinite(val)
+}
+```
+
+## isPromise
+
+位置： 同上
+
+功能： 判断是否是priomise对象
+
+```javascript
+export function isPromise (val: any): boolean {
+  return (
+    isDef(val) &&
+    typeof val.then === 'function' &&
+    typeof val.catch === 'function'
+  )
+}
+```
+
 
 
 ## *cached
@@ -1335,22 +1484,6 @@ export const camelize = cached((str: string): string => {
 
 
 
-## isPlainObject
-
-位置： core/shared/util.js
-
-功能：确保是纯对象。
-
-```javascript
-/**
- * Strict object type check. Only returns true
- * for plain JavaScript objects.
- */
-export function isPlainObject (obj: any): boolean {
-  return _toString.call(obj) === '[object Object]'
-}
-```
-
 
 
 ## extend
@@ -1389,56 +1522,6 @@ export function hasOwn (obj: Object | Array<*>, key: string): boolean {
 ```
 
 
-
-## isTrue
-
-位置：core/shared/util.js
-
-功能：判断是否为Boolean对象 且为true
-
-```javascript
-export function isTrue (v: any): boolean %checks {
-  return v === true
-}
-
-```
-
-
-
-## isFalse
-
-位置： core/shared/util.js
-
-功能：判断是否为Boolean对象 且为false
-
-```javascript
-export function isFalse (v: any): boolean %checks {
-  return v === false
-}
-```
-
-
-
-## isPrimitive
-
-位置：core/shared/util.js
-
-功能：判断是否为以下四种原始数据类型  `string` `number` `symbol` `boolean`
-
-```javascript
-/**
- * Check if value is primitive.
- */
-export function isPrimitive (value: any): boolean %checks {
-  return (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    // $flow-disable-line
-    typeof value === 'symbol' ||
-    typeof value === 'boolean'
-  )
-}
-```
 
 
 
