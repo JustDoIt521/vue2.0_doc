@@ -1414,7 +1414,7 @@ export function isRegExp (v: any): boolean {
 }
 ```
 
-## *isValidArray
+## isValidArrayIndex
 
 位置：同上
 
@@ -1443,7 +1443,79 @@ export function isPromise (val: any): boolean {
 }
 ```
 
+## toString
 
+位置：同上
+
+功能：将参数转化为字符串形式并返回
+
+```javascript
+export function toString (val: any): string {
+  return val == null
+    ? ''
+    : Array.isArray(val) || (isPlainObject(val) && val.toString === _toString)
+      ? JSON.stringify(val, null, 2)
+      : String(val)
+}
+```
+
+## toNumber
+
+位置：同上
+
+功能： 将参数转化为数字。非数字则原封不动返回
+
+```javascript
+/**
+ * Convert an input value to a number for persistence.
+ * If the conversion fails, return original string.
+ */
+export function toNumber (val: string): number | string {
+  const n = parseFloat(val)
+  return isNaN(n) ? val : n
+}
+```
+
+## makeMap
+
+位置：同上
+
+功能：创建一组映射关系。默认每个映射的值为`true`
+
+```javascript
+/**
+ * Make a map and return a function for checking if a key
+ * is in that map.
+ */
+export function makeMap (
+  str: string,
+  expectsLowerCase?: boolean
+): (key: string) => true | void {
+  const map = Object.create(null)
+  const list: Array<string> = str.split(',')
+  for (let i = 0; i < list.length; i++) {
+    map[list[i]] = true
+  }
+  return expectsLowerCase
+    ? val => map[val.toLowerCase()]
+    : val => map[val]
+}
+```
+
+
+
+## *isValidArray
+
+位置：同上
+
+功能：
+
+```javascript
+export function isValidArrayIndex (val: any): boolean {
+  const n = parseFloat(String(val))
+  return n >= 0 && Math.floor(n) === n && isFinite(val)
+}
+```
 
 ## *cached
 
