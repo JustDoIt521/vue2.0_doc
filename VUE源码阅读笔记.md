@@ -1502,6 +1502,65 @@ export function makeMap (
 }
 ```
 
+## isBuildInTag
+
+位置：同上
+
+功能：标记了 `slot` `component` 为内置的标签 
+
+```javascript
+/**
+ * Check if a tag is a built-in tag.
+ */
+export const isBuiltInTag = makeMap('slot,component', true)
+```
+
+## isReservedAttribute
+
+位置：同上
+
+功能：标记属性 `key,ref,slot,slot-scope,is`为内置属性
+
+```javascript
+/**
+ * Check if an attribute is a reserved attribute.
+ */
+export const isReservedAttribute = makeMap('key,ref,slot,slot-scope,is')
+```
+
+## remove
+
+位置:同上
+
+功能：从数组中删除对应位置的元素 并返回修改后的数组。（splice是对原数组进行操作）
+
+```javascript
+export function remove (arr: Array<any>, item: any): Array<any> | void {
+  if (arr.length) {
+    const index = arr.indexOf(item)
+    if (index > -1) {
+      return arr.splice(index, 1)
+    }
+  }
+}
+```
+
+## ---hasOwn
+
+位置：同上
+
+功能：判断对象本身是否含有某个属性 而非由原型链继承
+
+```javascript
+/**
+ * Check whether an object has the property.
+ */
+const hasOwnProperty = Object.prototype.hasOwnProperty
+export function hasOwn (obj: Object | Array<*>, key: string): boolean {
+  return hasOwnProperty.call(obj, key)
+}
+```
+
 
 
 ## *isValidArray
@@ -1574,23 +1633,6 @@ export function extend (to: Object, _from: ?Object): Object {
   }
   return to
 }
-```
-
-## hasOwn
-
-位置： core/shared/util.js
-
-功能： 判断对象自身是否包含某个属性
-
-```javascript
-/**
- * Check whether an object has the property.
- */
-const hasOwnProperty = Object.prototype.hasOwnProperty
-export function hasOwn (obj: Object | Array<*>, key: string): boolean {
-  return hasOwnProperty.call(obj, key)
-}
-
 ```
 
 
