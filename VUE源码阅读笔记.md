@@ -585,15 +585,11 @@ export default Vue
 
 
 
-# new Vue()
+#  ** new Vue()
 
 从上一章可以知道， 当我们执行 `new Vue`的时候，其实是调用了 `this._init`方法。我们接下来就分析一下 在 `new`的过程中 发生了啥。
 
 首先调用 `this._init`。 我们传进去的
-
-
-
-
 
 
 
@@ -1545,7 +1541,7 @@ export function remove (arr: Array<any>, item: any): Array<any> | void {
 }
 ```
 
-## ---hasOwn
+## hasOwn
 
 位置：同上
 
@@ -1558,21 +1554,6 @@ export function remove (arr: Array<any>, item: any): Array<any> | void {
 const hasOwnProperty = Object.prototype.hasOwnProperty
 export function hasOwn (obj: Object | Array<*>, key: string): boolean {
   return hasOwnProperty.call(obj, key)
-}
-```
-
-
-
-## *isValidArray
-
-位置：同上
-
-功能：
-
-```javascript
-export function isValidArrayIndex (val: any): boolean {
-  const n = parseFloat(String(val))
-  return n >= 0 && Math.floor(n) === n && isFinite(val)
 }
 ```
 
@@ -1595,8 +1576,6 @@ export function cached<F: Function> (fn: F): F {
 }
 ```
 
-
-
 ## cnamelize
 
 位置：core/shared/util.js
@@ -1613,9 +1592,104 @@ export const camelize = cached((str: string): string => {
 })
 ```
 
+## capitalize
 
+位置： 同上
 
+功能： 首字母大写
 
+```javascript
+/**
+ * Capitalize a string.
+ */
+export const capitalize = cached((str: string): string => {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+})
+```
+
+## hyphenate
+
+位置： 同上
+
+功能： 将`str`中的大写字母替换为 `-小写`
+
+```javascript
+/**
+ * Hyphenate a camelCase string.
+ */
+const hyphenateRE = /\B([A-Z])/g
+export const hyphenate = cached((str: string): string => {
+  return str.replace(hyphenateRE, '-$1').toLowerCase()
+})
+```
+
+## polyfillBind
+
+位置： 同上
+
+功能：`polyfill`（业界黑话，泛指通过代码实现浏览器不支持的某些无法形容的功能）
+
+```javascript
+/**
+ * Simple bind polyfill for environments that do not support it,
+ * e.g., PhantomJS 1.x. Technically, we don't need this anymore
+ * since native bind is now performant enough in most browsers.
+ * But removing it would mean breaking code that was able to run in
+ * PhantomJS 1.x, so this must be kept for backward compatibility.
+ */
+
+/* istanbul ignore next */
+function polyfillBind (fn: Function, ctx: Object): Function {
+  function boundFn (a) {
+    const l = arguments.length
+    return l
+      ? l > 1
+        ? fn.apply(ctx, arguments)
+        : fn.call(ctx, a)
+      : fn.call(ctx)
+  }
+
+  boundFn._length = fn.length
+  return boundFn
+}
+```
+
+## nativeBind
+
+位置：同上
+
+功能： 将 `fn`绑定指定对象 `ctx`。
+
+```javascript
+function nativeBind (fn: Function, ctx: Object): Function {
+  return fn.bind(ctx)
+}
+// 根据bind是否存在来赋值。 看样子是为了兼容bind
+export const bind = Function.prototype.bind
+  ? nativeBind
+  : polyfillBind
+```
+
+## toArray
+
+位置：同上
+
+功能： 将一个 `array-like`对象转化为数组。 
+
+```javascript
+/**
+ * Convert an Array-like object to a real Array.
+ */
+export function toArray (list: any, start?: number): Array<any> {
+  start = start || 0
+  let i = list.length - start
+  const ret: Array<any> = new Array(i)
+  while (i--) {
+    ret[i] = list[i + start]
+  }
+  return ret
+}
+```
 
 ## extend
 
@@ -1634,6 +1708,208 @@ export function extend (to: Object, _from: ?Object): Object {
   return to
 }
 ```
+
+## toObject
+
+位置：同上
+
+功能：把对象数组转化成 单个对象  `[{}, {}, {}] 对象数组`
+
+```javascript
+/**
+ * Merge an Array of Objects into a single Object.
+ */
+export function toObject (arr: Array<any>): Object {
+  const res = {}
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i]) {
+      extend(res, arr[i])
+    }
+  }
+  return res
+}
+```
+
+## noop
+
+位置：同上
+
+功能： 一个空函数。 从注释上看  是为了让flow不要留下无用代码。
+
+```javascript
+
+/**
+ * Perform no operation.
+ * Stubbing args to make Flow happy without leaving useless transpiled code
+ * with ...rest (https://flow.org/blog/2017/05/07/Strict-Function-Call-Arity/).
+ */
+export function noop (a?: any, b?: any, c?: any) {}
+```
+
+## no
+
+位置上：同上
+
+功能： 返沪false
+
+```javascript
+/**
+ * Always return false.
+ */
+export const no = (a?: any, b?: any, c?: any) => false
+```
+
+## identity
+
+位置：同上
+
+功能： 返回默认值  `_`
+
+```javascript
+export const identity = (_: any) => _
+```
+
+## *genStaticKeys
+
+位置：同上
+
+功能：收集 `compiler modules`的 `static keys`
+
+```javascript
+/**
+ * Generate a string containing static keys from compiler modules.
+ */
+export function genStaticKeys (modules: Array<ModuleOptions>): string {
+  return modules.reduce((keys, m) => {
+    return keys.concat(m.staticKeys || [])
+  }, []).join(',')
+}
+```
+
+## looseEqual
+
+位置：同上
+
+功能：判断两个对象是否是抽象相等。
+
+```javascript
+/**
+ * Check if two values are loosely equal - that is,
+ * if they are plain objects, do they have the same shape?
+ */
+export function looseEqual (a: any, b: any): boolean {
+  if (a === b) return true
+  const isObjectA = isObject(a)
+  const isObjectB = isObject(b)
+  if (isObjectA && isObjectB) {
+    try {
+      const isArrayA = Array.isArray(a)
+      const isArrayB = Array.isArray(b)
+      if (isArrayA && isArrayB) {
+        return a.length === b.length && a.every((e, i) => {
+          return looseEqual(e, b[i])
+        })
+      } else if (a instanceof Date && b instanceof Date) {
+        return a.getTime() === b.getTime()
+      } else if (!isArrayA && !isArrayB) {
+        const keysA = Object.keys(a)
+        const keysB = Object.keys(b)
+        return keysA.length === keysB.length && keysA.every(key => {
+          return looseEqual(a[key], b[key])
+        })
+      } else {
+        /* istanbul ignore next */
+        return false
+      }
+    } catch (e) {
+      /* istanbul ignore next */
+      return false
+    }
+  } else if (!isObjectA && !isObjectB) {
+    return String(a) === String(b)
+  } else {
+    return false
+  }
+}
+```
+
+## looseIndexOf
+
+位置：同上
+
+功能：找到对象数组中 和 目标对象相等的那个对象 并返回数组下标
+
+```javascript
+/**
+ * Return the first index at which a loosely equal value can be
+ * found in the array (if value is a plain object, the array must
+ * contain an object of the same shape), or -1 if it is not present.
+ */
+export function looseIndexOf (arr: Array<mixed>, val: mixed): number {
+  for (let i = 0; i < arr.length; i++) {
+    if (looseEqual(arr[i], val)) return i
+  }
+  return -1
+}
+```
+
+## once
+
+位置：同上
+
+功能： 确保函数只执行一次
+
+```javascript
+/**
+ * Ensure a function is called only once.
+ */
+export function once (fn: Function): Function {
+  let called = false
+  return function () {
+    if (!called) {
+      called = true
+      fn.apply(this, arguments)
+    }
+  }
+}
+```
+
+
+
+
+
+
+
+## *isValidArray
+
+位置：同上
+
+功能：
+
+```javascript
+export function isValidArrayIndex (val: any): boolean {
+  const n = parseFloat(String(val))
+  return n >= 0 && Math.floor(n) === n && isFinite(val)
+}
+```
+
+
+
+# 知识点收集
+
+## arrary-like-objects
+
+参考： https://github.com/lessfish/underscore-analysis/issues/14
+
+泛指类似数组的对象。即可以使用`[i]`来访问， 具有 `length`属性，但是没有数组方法。 如 `pop` `push`等
+
+## loose equality |  double equals
+
+抽象相等 即== 判断
+
+## strict equality | identity | triple equals
+
+严格相等  即 ===
 
 
 
