@@ -1893,6 +1893,46 @@ export function isValidArrayIndex (val: any): boolean {
 }
 ```
 
+## _Set
+
+位置： src/core/util/env.js
+
+功能：
+
+```javascript
+let _Set
+/* istanbul ignore if */ // $flow-disable-line
+if (typeof Set !== 'undefined' && isNative(Set)) {
+  // use native Set when available.
+  _Set = Set
+} else {
+  // a non-standard Set polyfill that only works with primitive keys.
+  _Set = class Set implements SimpleSet {
+    set: Object;
+    constructor () {
+      this.set = Object.create(null)
+    }
+    has (key: string | number) {
+      return this.set[key] === true
+    }
+    add (key: string | number) {
+      this.set[key] = true
+    }
+    clear () {
+      this.set = Object.create(null)
+    }
+  }
+}
+
+export interface SimpleSet {
+  has(key: string | number): boolean;
+  add(key: string | number): mixed;
+  clear(): void;
+}
+
+export { _Set }
+```
+
 
 
 # 知识点收集
@@ -1911,7 +1951,32 @@ export function isValidArrayIndex (val: any): boolean {
 
 严格相等  即 ===
 
+## Plain Object
 
+通过 {} 或者 new Object()创建 即 `Plain Old JavaScript Object`
+
+plain object： 
+
+```javascript
+var obj = {name: 'xxx'}
+var obj = new Object()
+```
+
+其他类型的Object
+
+```javascript
+var ob1 = function(name) {
+	this.name = name
+}
+var ob = new ob1('li');
+
+class ob2{
+	constructor(name) {
+		this.name = name
+	}
+}
+var ob = new ob2('li')
+```
 
 
 

@@ -1,8 +1,200 @@
 # watch解读
 
-源码位置：core/instance/watcher.js
+## watch描述
 
-源码：
+类型： `{ [key: string]: string | Function | Object | Array }`
+
+详细：一个对象，键是需要观察的表达式，值是对应回调函数。值也可以是方法名，或者包含选项的对象。Vue 实例将会在实例化时调用 `$watch()`，遍历 watch 对象的每一个 property。
+
+样例：
+
+```javascript
+var vm = new Vue({
+  data: {
+    a: 1,
+    b: 2,
+    c: 3,
+    d: 4,
+    e: {
+      f: {
+        g: 5
+      }
+    }
+  },
+  watch: {
+    a: function (val, oldVal) {
+      console.log('new: %s, old: %s', val, oldVal)
+    },
+    // 方法名
+    b: 'someMethod',
+    // 该回调会在任何被侦听的对象的 property 改变时被调用，不论其被嵌套多深
+    c: {
+      handler: function (val, oldVal) { /* ... */ },
+      deep: true
+    },
+    // 该回调将会在侦听开始之后被立即调用
+    d: {
+      handler: 'someMethod',
+      immediate: true
+    },
+    // 你可以传入回调数组，它们会被逐一调用
+    e: [
+      'handle1',
+      function handle2 (val, oldVal) { /* ... */ },
+      {
+        handler: function handle3 (val, oldVal) { /* ... */ },
+        /* ... */
+      }
+    ],
+    // watch vm.e.f's value: {g: 5}
+    'e.f': function (val, oldVal) { /* ... */ }
+  }
+})
+vm.a = 2 // => new: 2, old: 1
+```
+
+
+
+## 流程
+
+### 	注入watch
+
+​	core/instance/index.js
+
+```javascript
+// 在vue初始化的时候  stateMixin注册$watch
+import { stateMixin } from './state'
+...
+stateMixin(Vue)
+...
+export default Vue
+```
+
+core/instance/state.js
+
+```javascript
+export function stateMixin (Vue: Class<Component>) {
+  ...
+  Vue.prototype.$watch = function (
+    expOrFn: string | Function,
+    cb: any,
+    options?: Object
+  ): Function {
+    ...
+  }
+}
+```
+
+### 实例化watch
+
+core/instance/initMixin
+
+```javascript
+import { initState } from './state'
+
+export function initMixin (Vue: Class<Component>) {
+  Vue.prototype._init = function (options?: Object) {
+    const vm: Component = this
+    ...
+    initState(vm)
+    ...
+}
+```
+
+core/instance/state.js
+
+```javascript
+export function initState (vm: Component) {
+  vm._watchers = []
+  const opts = vm.$options
+  if (opts.props) initProps(vm, opts.props)
+  if (opts.methods) initMethods(vm, opts.methods)
+  if (opts.data) {
+    initData(vm)
+  } else {
+    observe(vm._data = {}, true /* asRootData */)
+  }
+  if (opts.computed) initComputed(vm, opts.computed)
+  if (opts.watch && opts.watch !== nativeWatch) {
+    initWatch(vm, opts.watch)
+  }
+}
+
+function initWatch (vm: Component, watch: Object) {
+  for (const key in watch) {
+    const handler = watch[key]
+    //是否是多个监听函数
+    if (Array.isArray(handler)) {
+      for (let i = 0; i < handler.length; i++) {
+        createWatcher(vm, key, handler[i])
+      }
+    } else {
+      createWatcher(vm, key, handler)
+    }
+  }
+}
+
+function createWatcher (
+  vm: Component,
+  expOrFn: string | Function,
+  handler: any,
+  options?: Object
+) {
+   // 对应样例中c、d的方式
+  if (isPlainObject(handler)) {
+    options = handler
+    handler = handler.handler
+  }
+  // 对应 样例中  b的 监听方式
+  if (typeof handler === 'string') {
+    handler = vm[handler]
+  }
+  return vm.$watch(expOrFn, handler, options)
+}
+```
+
+### $watch 
+
+core/instance/state.js
+
+```javascript
+import Watcher from '../observer/watcher'
+...
+export function stateMixin (Vue: Class<Component>) {
+  ...
+  Vue.prototype.$watch = function (
+    expOrFn: string | Function,
+    cb: any,
+    options?: Object
+  ): Function {
+    const vm: Component = this
+    if (isPlainObject(cb)) {  // cb 即 handler是否是对象
+      return createWatcher(vm, expOrFn, cb, options)
+    }
+    options = options || {}
+  //   标识是用户设置的监听？  
+    options.user = true
+    const watcher = new Watcher(vm, expOrFn, cb, options)
+    // 如果设置了 immediate 则 该属性会在创建时就执行一次watch方法 
+    if (options.immediate) {
+      try {
+        cb.call(vm, watcher.value)
+      } catch (error) {
+        handleError(error, vm, `callback for immediate watcher "${watcher.expression}"`)
+      }
+    }
+    return function unwatchFn () {
+      watcher.teardown()
+    }
+  }
+}
+```
+
+### Watcher
+
+core/observer/watcher.js
+
+Watcher 是用在 $watch  和  directives `(即 依赖收集)`
 
 ```javascript
 import {
