@@ -1266,9 +1266,9 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 
 # 工具函数
 
-## emptyObject
+# src/shared/util.js
 
-位置：core/shared/util.js
+## emptyObject
 
 功能： 冻结对象。 不能修改，添加，删除属性，原型也不可修改
 
@@ -1276,11 +1276,7 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 export const emptyObject = Object.freeze({})
 ```
 
-
-
 ## isUndef
-
-位置：core/shared/util.js
 
 功能：参数v是否为 undefined或者null
 
@@ -1292,8 +1288,6 @@ export function isUndef (v: any): boolean %checks {
 
 ## isDef
 
-位置： 同上
-
 功能： 判断参数 不为  `undefined`  `null`
 
 ```javascript
@@ -1303,8 +1297,6 @@ export function isDef (v: any): boolean %checks {
 ```
 
 ## isTrue
-
-位置：core/shared/util.js
 
 功能：判断是否为Boolean对象 且为true
 
@@ -1317,8 +1309,6 @@ export function isTrue (v: any): boolean %checks {
 
 ## isFalse
 
-位置： core/shared/util.js
-
 功能：判断是否为Boolean对象 且为false
 
 ```javascript
@@ -1328,8 +1318,6 @@ export function isFalse (v: any): boolean %checks {
 ```
 
 ## isPrimitive
-
-位置：core/shared/util.js
 
 功能：判断是否为以下四种原始数据类型  `string` `number` `symbol` `boolean`
 
@@ -1350,8 +1338,6 @@ export function isPrimitive (value: any): boolean %checks {
 
 ## isObject
 
-位置： 同上
-
 功能： 快速检测非空对象
 
 ```javascript
@@ -1366,8 +1352,6 @@ export function isObject (obj: mixed): boolean %checks {
 ```
 
 ## toRawType
-
-位置： 同上
 
 功能： 返回对象的基本数据类型
 
@@ -1384,8 +1368,6 @@ export function toRawType (value: any): string {
 
 ## isPlainObject
 
-位置： core/shared/util.js
-
 功能：确保是纯对象。
 
 ```javascript
@@ -1400,8 +1382,6 @@ export function isPlainObject (obj: any): boolean {
 
 ## isRegExp
 
-位置： 同上
-
 功能： 判断是否是 正则表达式
 
 ```javascript
@@ -1411,8 +1391,6 @@ export function isRegExp (v: any): boolean {
 ```
 
 ## isValidArrayIndex
-
-位置：同上
 
 功能：
 
@@ -1424,8 +1402,6 @@ export function isValidArrayIndex (val: any): boolean {
 ```
 
 ## isPromise
-
-位置： 同上
 
 功能： 判断是否是priomise对象
 
@@ -1441,8 +1417,6 @@ export function isPromise (val: any): boolean {
 
 ## toString
 
-位置：同上
-
 功能：将参数转化为字符串形式并返回
 
 ```javascript
@@ -1456,8 +1430,6 @@ export function toString (val: any): string {
 ```
 
 ## toNumber
-
-位置：同上
 
 功能： 将参数转化为数字。非数字则原封不动返回
 
@@ -1473,8 +1445,6 @@ export function toNumber (val: string): number | string {
 ```
 
 ## makeMap
-
-位置：同上
 
 功能：创建一组映射关系。默认每个映射的值为`true`
 
@@ -1500,8 +1470,6 @@ export function makeMap (
 
 ## isBuildInTag
 
-位置：同上
-
 功能：标记了 `slot` `component` 为内置的标签 
 
 ```javascript
@@ -1513,8 +1481,6 @@ export const isBuiltInTag = makeMap('slot,component', true)
 
 ## isReservedAttribute
 
-位置：同上
-
 功能：标记属性 `key,ref,slot,slot-scope,is`为内置属性
 
 ```javascript
@@ -1525,8 +1491,6 @@ export const isReservedAttribute = makeMap('key,ref,slot,slot-scope,is')
 ```
 
 ## remove
-
-位置:同上
 
 功能：从数组中删除对应位置的元素 并返回修改后的数组。（splice是对原数组进行操作）
 
@@ -1543,8 +1507,6 @@ export function remove (arr: Array<any>, item: any): Array<any> | void {
 
 ## hasOwn
 
-位置：同上
-
 功能：判断对象本身是否含有某个属性 而非由原型链继承
 
 ```javascript
@@ -1558,8 +1520,6 @@ export function hasOwn (obj: Object | Array<*>, key: string): boolean {
 ```
 
 ## *cached
-
-位置：core/shared/util.js
 
 功能： 暂未发现用途。 （根据官方注释 是创造了一个纯函数的缓存版本？？）
 
@@ -1578,8 +1538,6 @@ export function cached<F: Function> (fn: F): F {
 
 ## cnamelize
 
-位置：core/shared/util.js
-
 功能： 将以 `-`连接的属性名替换为驼峰命名。
 
 ```javascript
@@ -1594,8 +1552,6 @@ export const camelize = cached((str: string): string => {
 
 ## capitalize
 
-位置： 同上
-
 功能： 首字母大写
 
 ```javascript
@@ -1608,8 +1564,6 @@ export const capitalize = cached((str: string): string => {
 ```
 
 ## hyphenate
-
-位置： 同上
 
 功能： 将`str`中的大写字母替换为 `-小写`
 
@@ -1624,8 +1578,6 @@ export const hyphenate = cached((str: string): string => {
 ```
 
 ## polyfillBind
-
-位置： 同上
 
 功能：`polyfill`（业界黑话，泛指通过代码实现浏览器不支持的某些无法形容的功能）
 
@@ -1656,8 +1608,6 @@ function polyfillBind (fn: Function, ctx: Object): Function {
 
 ## nativeBind
 
-位置：同上
-
 功能： 将 `fn`绑定指定对象 `ctx`。
 
 ```javascript
@@ -1671,8 +1621,6 @@ export const bind = Function.prototype.bind
 ```
 
 ## toArray
-
-位置：同上
 
 功能： 将一个 `array-like`对象转化为数组。 
 
@@ -1693,8 +1641,6 @@ export function toArray (list: any, start?: number): Array<any> {
 
 ## extend
 
-位置： core/shared/util.js
-
 功能：将源函数的属性添加到目标函数上
 
 ```javascript
@@ -1710,8 +1656,6 @@ export function extend (to: Object, _from: ?Object): Object {
 ```
 
 ## toObject
-
-位置：同上
 
 功能：把对象数组转化成 单个对象  `[{}, {}, {}] 对象数组`
 
@@ -1732,8 +1676,6 @@ export function toObject (arr: Array<any>): Object {
 
 ## noop
 
-位置：同上
-
 功能： 一个空函数。 从注释上看  是为了让flow不要留下无用代码。
 
 ```javascript
@@ -1748,8 +1690,6 @@ export function noop (a?: any, b?: any, c?: any) {}
 
 ## no
 
-位置上：同上
-
 功能： 返沪false
 
 ```javascript
@@ -1761,8 +1701,6 @@ export const no = (a?: any, b?: any, c?: any) => false
 
 ## identity
 
-位置：同上
-
 功能： 返回默认值  `_`
 
 ```javascript
@@ -1770,8 +1708,6 @@ export const identity = (_: any) => _
 ```
 
 ## *genStaticKeys
-
-位置：同上
 
 功能：收集 `compiler modules`的 `static keys`
 
@@ -1787,8 +1723,6 @@ export function genStaticKeys (modules: Array<ModuleOptions>): string {
 ```
 
 ## looseEqual
-
-位置：同上
 
 功能：判断两个对象是否是抽象相等。
 
@@ -1835,8 +1769,6 @@ export function looseEqual (a: any, b: any): boolean {
 
 ## looseIndexOf
 
-位置：同上
-
 功能：找到对象数组中 和 目标对象相等的那个对象 并返回数组下标
 
 ```javascript
@@ -1854,8 +1786,6 @@ export function looseIndexOf (arr: Array<mixed>, val: mixed): number {
 ```
 
 ## once
-
-位置：同上
 
 功能： 确保函数只执行一次
 
@@ -1878,26 +1808,122 @@ export function once (fn: Function): Function {
 
 
 
+# src/core/util/env.js
 
+## hasProto
 
-## *isValidArray
-
-位置：同上
-
-功能：
+功能: 在当前环境是否可以使用 `__proto__`  来访问对象的构造函数的原型对象
 
 ```javascript
-export function isValidArrayIndex (val: any): boolean {
-  const n = parseFloat(String(val))
-  return n >= 0 && Math.floor(n) === n && isFinite(val)
-}
+// can we use __proto__?
+export const hasProto = '__proto__' in {}
 ```
+
+## inBrowser
+
+功能： 判断是否是在浏览器环境
+
+```javascript
+export const inBrowser = typeof window !== 'undefined'
+```
+
+## inWeex
+
+功能： 判断是否是Weex
+
+```javascript
+export const inWeex = typeof WXEnvironment !== 'undefined' && !!WXEnvironment.platform
+```
+
+## weexPlatform
+
+功能： 判断weex的平台是哪类   `iOS`  `Android`  `Web`
+
+```javascript
+export const weexPlatform = inWeex && WXEnvironment.platform.toLowerCase()
+```
+
+## UA
+
+功能： 返回浏览器的 user angent字符串。 
+
+说明： 该字符串可以用来识别浏览器。 但是因为该字符串是用户可以修改的  所以并不可靠
+
+```javascript
+export const UA = inBrowser && window.navigator.userAgent.toLowerCase()
+```
+
+## isIE
+
+功能： 是否是ie浏览器
+
+```javascript
+export const isIE = UA && /msie|trident/.test(UA)
+```
+
+## isIE9
+
+功能： 是否是ie9
+
+```javascript
+export const isIE9 = UA && UA.indexOf('msie 9.0') > 0
+```
+
+## isEdge
+
+功能： 是否是edge
+
+```javascript
+export const isEdge = UA && UA.indexOf('edge/') > 0
+```
+
+## isAndroid
+
+功能： 是否是安卓
+
+```javascript
+export const isAndroid = (UA && UA.indexOf('android') > 0) || (weexPlatform === 'android')
+```
+
+## isIOS
+
+功能： 是否是ios
+
+```javascript
+export const isIOS = (UA && /iphone|ipad|ipod|ios/.test(UA)) || (weexPlatform === 'ios')
+```
+
+## isChrome
+
+功能： 是否是chrome
+
+```javascript
+export const isChrome = UA && /chrome\/\d+/.test(UA) && !isEdge
+```
+
+## isPhantomJS
+
+功能： 是否是PhantomJS
+
+```javascript
+export const isPhantomJS = UA && /phantomjs/.test(UA)
+```
+
+## isFF
+
+功能： 是否是火狐
+
+```javascript
+export const isFF = UA && UA.match(/firefox\/(\d+)/)
+```
+
+
 
 ## _Set
 
 位置： src/core/util/env.js
 
-功能：
+功能：创建一个含有 has  add  clear方法的类
 
 ```javascript
 let _Set
@@ -1924,6 +1950,7 @@ if (typeof Set !== 'undefined' && isNative(Set)) {
   }
 }
 
+//定义了 Set的格式  这样 通过 implement 的类  如果含有  has add clear 这三个方法时  会保证返回的类型是和 simpleSet一致。
 export interface SimpleSet {
   has(key: string | number): boolean;
   add(key: string | number): mixed;
@@ -1931,6 +1958,48 @@ export interface SimpleSet {
 }
 
 export { _Set }
+```
+
+# core/util/lang.js
+
+## unicodeRegExp
+
+功能：匹配unicode中的所有语言字符
+
+```javascript
+/**
+ * unicode letters used for parsing html tags, component names and property paths.
+ * using https://www.w3.org/TR/html53/semantics-scripting.html#potentialcustomelementname
+ * skipping \u10000-\uEFFFF due to it freezing up PhantomJS
+ */
+export const unicodeRegExp = /a-zA-Z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD/
+```
+
+
+
+## parsePath
+
+功能：
+
+```javascript
+
+/**
+ * Parse simple path.
+ */
+const bailRE = new RegExp(`[^${unicodeRegExp.source}.$_\\d]`)
+export function parsePath (path: string): any {
+  if (bailRE.test(path)) {
+    return
+  }
+  const segments = path.split('.')
+  return function (obj) {
+    for (let i = 0; i < segments.length; i++) {
+      if (!obj) return
+      obj = obj[segments[i]]
+    }
+    return obj
+  }
+}
 ```
 
 
@@ -1978,7 +2047,15 @@ class ob2{
 var ob = new ob2('li')
 ```
 
+## RegExp.prototype.source
 
+返回正则表达式的文本模式的字符串  该不包含正则字面量两边的斜杠和 任何标志字符
+
+```javascript
+var regex = /fooBar/ig;
+
+console.log(regex.source); // "fooBar"，不包含 /.../ 和 "ig"
+```
 
 
 
