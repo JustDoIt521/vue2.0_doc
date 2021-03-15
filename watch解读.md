@@ -435,3 +435,18 @@ export default class Watcher {
 
 ```
 
+### 大概流程
+
+在引入 `Vue`的时候，首先调用 `stateMixin`挂载方法 `$watch`。 
+
+然后当我们在实例化一个 `Vue`对象的时候，调用 `this._init` 。
+
+`this_init` 中执行了`initState`方法。
+
+在 `initState` 中当 `options.watch`存在时，调用 `initWatch`方法遍历 `watch`对象中的需要watch的数据，
+
+ 对每一个需要watch的`data`调用 `createWatcher`方法。
+
+`createWatcher`方法其实是提取出来`data`对应的处理函数， 并执行之前引入 `Vue`时挂载的 `$watch`方法。
+
+`$watch`创建一个 `Watcher`对象。 （`Watcher`用在 watch 和依赖收集过程中）
