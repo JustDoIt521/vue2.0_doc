@@ -450,3 +450,63 @@ export default class Watcher {
 `createWatcher`方法其实是提取出来`data`对应的处理函数， 并执行之前引入 `Vue`时挂载的 `$watch`方法。
 
 `$watch`创建一个 `Watcher`对象。 （`Watcher`用在 watch 和依赖收集过程中）
+
+
+
+## 数据更新触发watch的流程
+
+其实触发的是update函数。
+
+dep.notify -> watcher.update
+
+core/observer/index.js
+
+```javascript
+/**
+ * Define a reactive property on an Object.
+ */
+export function defineReactive (
+  obj: Object,
+  key: string,
+  val: any,
+  customSetter?: ?Function,
+  shallow?: boolean
+) {
+  const dep = new Dep()
+   ...
+  Object.defineProperty(obj, key, {
+    enumerable: true,
+    configurable: true,
+    get: function reactiveGetter () {
+      ...
+    },
+    set: function reactiveSetter (newVal) {
+     ...
+      dep.notify()
+    }
+  })
+}
+```
+
+core/observer/dep.js
+
+```javascript
+export default class Dep {
+ ...
+
+  notify () {
+    // stabilize the subscriber list first
+    const subs = this.subs.slice()
+    if (process.env.NODE_ENV !== 'production' && !config.async) {
+      // subs aren't sorted in scheduler if not running async
+      // we need to sort them now to make sure they fire in correct
+      // order
+      subs.sort((a, b) => a.id - b.id)
+    }
+    for (let i = 0, l = subs.length; i < l; i++) {
+      subs[i].update()
+    }
+  }
+}
+```
+
