@@ -455,6 +455,10 @@ export default class Watcher {
 
 ## 数据更新触发watch的流程
 
+当我们在初始化`data`的时候，通过`object.defineProperty`给每个属性都添加了`get` 和`set`函数。其中`get`用于收集依赖，`set`则用于更新依赖。即当我们在`new Watcher`的时候，我们调用了`Watcher.get`方法来获取我们观察的属性的值，此时该属性的`get`方法已被触发，`watcher`就被添加到了依赖收集的队列里面，当属性改变的时候，就通过这个队列触发`watcher`里的`function`
+
+
+
 其实触发的是update函数。
 
 dep.notify -> watcher.update
