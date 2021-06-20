@@ -284,8 +284,7 @@ export default class Watcher {
     this.value = this.lazy
       ? undefined
       : this.get()
-  }
-
+  Z
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
