@@ -178,7 +178,23 @@ export default [
 
 ```
 
+##### klass
 
+src/platforms/web/compiler/modules/class.js
+
+添加删除dom的 class。 包括静态的class （class="xxx"） 和 动态的class （:class="{xxx}"）
+
+##### style
+
+src/platforms/web/compiler/modules/style.js
+
+添加删除dom的style。包含静态的style （style="xxxx" ）和动态的style （:style="")
+
+##### model
+
+src/platforms/web/compiler/modules/model.js
+
+元素的 v-bind v-for v-if v-else等属性
 
 ### createCompiler
 
@@ -192,7 +208,6 @@ export const createCompiler = createCompilerCreator(function baseCompile (
   template: string,
   options: CompilerOptions
 ): CompiledResult {
-  debugger
   const ast = parse(template.trim(), options)
   if (options.optimize !== false) {
     optimize(ast, options)
