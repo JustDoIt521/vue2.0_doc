@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+    <head></head>
+    <body></body>
+    <script>
+        let data = {
+            name: 'lishang',
+            age: 23,
+        }
+
+        let watch = {
+            name: function() {
+                console.warn('update 啦啦啦');
+            }
+        }
+
+
+        function initWatcher() {
+            let keys = Object.keys(watch);
+            for(let key of keys) {
+                let fn = watch[key];
+                createWatcher(key, fn);
+            }
+        }
+
+        function createWatcher(key, fn) {
+            new Watcher(key, fn);
+        }
+
+        class Watcher {
+            constructor(key, fn) {
+                this.key = key;
+                this.fn = fn;
+                // 如何收集到依赖主要是在这一步
+                this.value = this.get();
+            }
+            get() {
+                Dep.target = this;
+                let value = data[this.key];
+
+                return value;
+            }
+
+            update() {
+                this.fn();
+            }
+        }
+
+
+
+        // 初始化data
+        function initData() {
+            let keys = Object.keys(data);
+            for(let key of keys) {
+                createObserve(data, key);
+            }
+        }
+        
+        // 创建observe
+        function createObserve(obj, key) {
+            const dep = new Dep();
+            let value = obj[key];
+            Object.defineProperty(obj, key, {
+                get: function() {
+                    // console.warn(this);
+                    if (Dep.target) {
+                        dep.subs.push(Dep.target);
+                    }
+
+                    // 在get的时候获取到依赖于它的对象 并放置于sub中
+                    return value;
+                },
+
+                set: function(val) {
+                    value = val;
+                    dep.notify();
+                }
+            })
+        }
+
+
+        let id = 0;
+        class Dep {
+            constructor() {
+                this.id = id++; // 为每一个dep对象创建不同的id
+                this.subs = []; // cunc依赖于它的watcher
+            }
+
+            notify() {
+                const subs = this.subs;
+                for(let sub of subs) {
+                    sub.update();
+                }
+            }
+        }
+
+        Dep.target = null;
+
+        initData();
+        initWatcher();
+
+        data.name = 'lishang11';
+
+    </script>
+</html>
