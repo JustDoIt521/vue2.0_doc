@@ -18,9 +18,11 @@ export function initMixin (Vue: Class<Component>) {
 
 我们通过 `new Vue`方式创建一个vue对象的时候 el就是我们挂载的 `dom对象。`
 
-## $mount
+## $mount （编译时期的 mount）
 
-scr/platforms/web/entry-runtime-with-compiler.js
+src/platforms/web/entry-runtime-with-compiler.js
+
+在获取到 dom结构之后，进行解析，并编译成 render函数，并返回 render 和 staticRenderFns
 
 ```javascript
 const mount = Vue.prototype.$mount
@@ -93,33 +95,11 @@ Vue.prototype.$mount = function (
 }
 ```
 
-## 方式一 template是 string
-
-
-
-## 方式二 template 不是 string
-
-### getOuterHTML
-
-同上
-
-获取了该dom节点及后代dom节点。 如果没有dom节点 则创建一个空的dom节点
-
-```javascript
-function getOuterHTML (el: Element): string {
-  if (el.outerHTML) {
-    return el.outerHTML
-  } else {
-    const container = document.createElement('div')
-    container.appendChild(el.cloneNode(true))
-    return container.innerHTML
-  }
-}
-```
-
 ### compileToFunctions
 
 src/platforms/web/compiler/index.js
+
+功能：生成上面的 render 和 静态渲染函数  const { render, staticRenderFns } = compileToFunctions...``
 
 ```javascript
 /* @flow */
@@ -128,100 +108,11 @@ import { baseOptions } from './options'
 import { createCompiler } from 'compiler/index'
 
 const { compile, compileToFunctions } = createCompiler(baseOptions)
+
+export { compile, compileToFunctions }
 ```
 
-### baseOptions
-
-src/platforms/web/compiler/baseOptions.js
-
-```javascript
-import {
-  isPreTag,
-  mustUseProp,
-  isReservedTag,
-  getTagNamespace
-} from '../util/index'
-
-import modules from './modules/index'
-import directives from './directives/index'
-import { genStaticKeys } from 'shared/util'
-import { isUnaryTag, canBeLeftOpenTag } from './util'
-
-export const baseOptions: CompilerOptions = {
-  expectHTML: true,
-  modules,
-  directives,
-  isPreTag,
-  isUnaryTag,
-  mustUseProp,
-  canBeLeftOpenTag,
-  isReservedTag,
-  getTagNamespace,
-  staticKeys: genStaticKeys(modules)
-}
-```
-
-#### modules
-
-src/platforms/web/compiler/modules/index.js
-
-```javascript
-import klass from './class'
-import style from './style'
-import model from './model'
-
-export default [
-  klass,
-  style,
-  model
-]
-
-```
-
-##### klass
-
-src/platforms/web/compiler/modules/class.js
-
-添加删除dom的 class。 包括静态的class （class="xxx"） 和 动态的class （:class="{xxx}"）
-
-##### style
-
-src/platforms/web/compiler/modules/style.js
-
-添加删除dom的style。包含静态的style （style="xxxx" ）和动态的style （:style="")
-
-##### model
-
-src/platforms/web/compiler/modules/model.js
-
-元素的 v-bind v-for v-if v-else等属性
-
-### createCompiler
-
-src/compiler/index.js
-
-```javascript
-// `createCompilerCreator` allows creating compilers that use alternative
-// parser/optimizer/codegen, e.g the SSR optimizing compiler.
-// Here we just export a default compiler using the default parts.
-export const createCompiler = createCompilerCreator(function baseCompile (
-  template: string,
-  options: CompilerOptions
-): CompiledResult {
-  const ast = parse(template.trim(), options)
-  if (options.optimize !== false) {
-    optimize(ast, options)
-  }
-  const code = generate(ast, options)
-  return {
-    ast,
-    render: code.render,
-    staticRenderFns: code.staticRenderFns
-  }
-}) 
-```
-
-## $mount
+## $mount（运行时期的mount）
 
 src/platforms/web/runtime/index.js
 
@@ -298,6 +189,8 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  
+  //笔者注： 创建vdom的 watcher
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
@@ -346,14 +239,12 @@ Vue.prototype._render = function (): VNode {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
-      vnode = render.call(vm._renderProxy, vm.$createElement)
-      
       /* ---------
       	vm._renderProxy 即 vm
       	
       	赋值于 Vue._init 函数。 core/instance/init.js
       --------- */
-      
+      vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
       // return error render result,
@@ -533,7 +424,7 @@ export function _createElement (
 
 ## _update
 
-src/core/nstance/lifeycle.js
+src/core/instance/lifeycle.js
 
 ```javascript
 export function lifecycleMixin (Vue: Class<Component>) {
